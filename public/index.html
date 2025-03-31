@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Terminal</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      font-size: 0.95em;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1em;
+      box-sizing: border-box;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .line {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      width: 100%;
+    }
+
+    .fade-in {
+      animation: fadeInUp 0.3s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    input {
+      background: transparent;
+      border: none;
+      color: #0f0;
+      outline: none;
+      font: inherit;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <div class="line">
+      
+      <input type="text" autofocus id="input" />
+    </div>
+  </div>
+
+  <script>
+    const container = document.getElementById('container');
+    const input = document.getElementById('input');
+
+    async function getChatGPTResponse(question) {
+      try {
+        const res = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+        return data.reply || "Pas de réponse.";
+      } catch (err) {
+        return "Erreur lors de la connexion.";
+      }
+    }
+
+    function typeText(element, text, delay = 35) {
+      let index = 0;
+      const interval = setInterval(() => {
+        if (index < text.length) {
+          element.textContent += text[index];
+          index++;
+          container.scrollTop = container.scrollHeight;
+        } else {
+          clearInterval(interval);
+        }
+      }, delay);
+    }
+
+    input.addEventListener('keydown', async function (e) {
+      if (e.key === 'Enter' && input.value.trim() !== '') {
+        const question = input.value.trim();
+
+        const questionLine = document.createElement('div');
+        questionLine.className = 'line fade-in';
+        questionLine.innerHTML = `<span>${question}</span>`;
+        container.insertBefore(questionLine, input.parentNode);
+
+        input.value = '';
+        container.scrollTop = container.scrollHeight;
+
+        const response = await getChatGPTResponse(question);
+
+        const responseLine = document.createElement('div');
+        responseLine.className = 'line fade-in';
+        const span = document.createElement('span');
+        responseLine.appendChild(document.createElement('span'));
+        responseLine.appendChild(span);
+        container.insertBefore(responseLine, input.parentNode);
+        container.scrollTop = container.scrollHeight;
+
+        setTimeout(() => {
+          typeText(span, response);
+        }, 400);
+      }
+    });
+
+    input.focus();
+  </script>
+</body>
+</html>
