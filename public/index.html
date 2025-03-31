@@ -139,9 +139,10 @@
       }
     });
 
-    setTimeout(() => {
+   document.addEventListener('touchstart', () => {
   input.focus();
-}, 100); 
+}, { once: true });
+
   </script>
 </body>
 </html>
